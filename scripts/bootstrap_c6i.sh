@@ -5,10 +5,9 @@
 #
 #   bash bootstrap_c6i.sh
 #
-# Mirrors the g4dn environment exactly: Python 3.14.4 + requirements_frozen.txt
-# (143 pins incl. torch==2.12.0+cu130 — needs the PyTorch cu130 index; the CUDA
-# wheels run fine on a CPU-only box, RLlib just won't use a GPU, which is the
-# intended num_gpus=0 configuration anyway).
+# Sets up the environment with Python 3.14 + torch (cu130) + `pip install -e .`.
+# The CUDA wheels run fine on a CPU-only box too — RLlib just won't use a GPU,
+# which is the intended num_gpus=0 configuration anyway.
 
 set -eo pipefail
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
@@ -34,9 +33,9 @@ python3.14 -m venv /home/ubuntu/finrl_env
 source /home/ubuntu/finrl_env/bin/activate
 pip install --upgrade pip
 
-log "[4/4] Installing 143 pinned packages (torch cu130 wheels are ~3 GB — be patient)..."
-pip install -r /home/ubuntu/algo_v2/requirements_frozen.txt \
-    --extra-index-url https://download.pytorch.org/whl/cu130
+log "[4/4] Installing PyTorch (cu130 wheels ~3 GB — be patient) + the algo_v2 package..."
+pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu130
+pip install -e /home/ubuntu/algo_v2
 
 log "Bootstrap complete."
 log "Launch:   cd /home/ubuntu/algo_v2 && PARALLEL_GROUPS=14 nohup bash scripts/phase6_master.sh > /dev/null 2>&1 &"
