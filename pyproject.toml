@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "algo_v2"
+version = "2.0.0"
+description = "42-bot reinforcement-learning ensemble trading system for NIFTY 50"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+# NOTE: PyTorch is installed separately with the correct CUDA wheel index
+# (see README / scripts/setup.sh) and is intentionally NOT pinned here.
+dependencies = [
+    "ray[rllib]==2.55.1",
+    "gymnasium==1.2.2",
+    "stockstats==0.5.4",
+    "pandas_market_calendars",
+    "exchange_calendars",
+    "yfinance==0.2.58",
+    "pandas==2.2.3",
+    "numpy==1.26.4",
+    "scipy==1.13.1",
+    "hmmlearn==0.3.3",
+    "optuna==3.6.1",
+    "python-telegram-bot==22.7",
+    "requests",
+    "boto3",
+    "tensorboard==2.20.0",
+    "scikit-learn==1.5.2",
+    "matplotlib",
+    "psutil",
+    "tqdm",
+    "python-dotenv",
+]
+
+[project.optional-dependencies]
+# Prototype features in docs/exploratory/ (not part of the production pipeline).
+exploratory = ["pyportfolioopt", "cvxpy", "osqp", "clarabel", "shap", "transformers", "sentencepiece"]
+# Tooling for development.
+dev = ["ruff", "pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+# Prototypes are kept as-is; the smoke harness is exercised, not reformatted aggressively.
+extend-exclude = ["docs/exploratory"]
+
+[tool.ruff.lint]
+# E402 (import not at top): train_ensemble/live.execute set env vars + parse args
+# before heavy imports on purpose. E731 lambda-assign and E741 are intentional too.
+ignore = ["E402", "E731", "E741"]

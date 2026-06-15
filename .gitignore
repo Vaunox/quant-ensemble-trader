@@ -1,0 +1,39 @@
+# Runtime data — generated on server, never commit
+*.csv
+*.json
+!.env.example
+
+# Trained model checkpoints + pipeline artifacts
+checkpoints/
+trained_models/
+ray_results/
+expert_data/
+
+# Live trading runtime state
+live_states/
+last_actions.pkl
+dummy_broker_state.json
+trades_*.jsonl
+bot_performance.db
+
+# Logs
+*.log
+__pycache__/
+*.pyc
+*.pyo
+
+# Python packaging / editable-install artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+__editable__.*
+
+# Secrets
+.env
+
+# Local-only Claude Code guidance (kept on disk, not part of the repo)
+CLAUDE.md
+
+# W&B artifacts (W&B removed; these are leftover)
+wandb/

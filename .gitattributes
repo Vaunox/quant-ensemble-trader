@@ -1,0 +1,23 @@
+# Normalize line endings. This repo is authored on Windows but deployed to and
+# run on Linux EC2 hosts, so all text files are stored as LF in the repo and
+# checked out / archived as LF on every platform. Without this, core.autocrlf
+# can emit CRLF into `git archive` output, which breaks shell scripts on Linux
+# (`$'do\r'`, "unexpected end of file").
+
+* text=auto
+
+# Code and scripts must always be LF (shell scripts run on Linux).
+*.sh   text eol=lf
+*.py   text eol=lf
+*.md   text eol=lf
+*.txt  text eol=lf
+*.cfg  text eol=lf
+*.toml text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+.env.example text eol=lf
+
+# Binary artifacts — never touch.
+*.pth  binary
+*.pkl  binary
+*.png  binary
