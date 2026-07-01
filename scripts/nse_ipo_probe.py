@@ -134,7 +134,7 @@ def _rows(payload: object) -> list:
     if isinstance(payload, list):
         return payload
     if isinstance(payload, dict):
-        for key in ("data", "activeIssues", "upcomingIssues", "records"):
+        for key in ("data", "dataList", "activeIssues", "upcomingIssues", "records"):
             val = payload.get(key)
             if isinstance(val, list):
                 return val
@@ -186,6 +186,69 @@ def detect_categories(record: object) -> dict[str, bool]:
     }
 
 
+# NSE's ipo-active-category rows are keyed by srNo; this maps the ones we score.
+SRNO_LABELS = {
+    "1": "QIB (Qualified Institutional Buyers)",
+    "2": "NII (Non-Institutional, combined)",
+    "2.1": "  bNII  (bid > Rs 10 lakh)",
+    "2.2": "  sNII  (bid Rs 2-10 lakh)",
+    "3": "Retail (RIIs)",
+    "4": "Employees",
+}
+
+
+def _find_datalists(obj) -> list:
+    """Recursively collect every `dataList` array in the payload."""
+    out = []
+    if isinstance(obj, dict):
+        for key, val in obj.items():
+            if key == "dataList" and isinstance(val, list):
+                out.append(val)
+            else:
+                out += _find_datalists(val)
+    elif isinstance(obj, list):
+        for item in obj:
+            out += _find_datalists(item)
+    return out
+
+
+def subscription_summary(record: object) -> bool:
+    """Print the category-wise subscription multiples from an ipo-active-category shape.
+
+    Returns True if a category table was found and printed.
+    """
+    lists = _find_datalists(record)
+    if not lists:
+        return False
+    rows = {str(r.get("srNo")): r for r in lists[0] if isinstance(r, dict)}
+    print("\n" + "=" * 72)
+    print("SUBSCRIPTION MULTIPLES (noOfTotalMeant = times subscribed)")
+    print("=" * 72)
+    printed = False
+    for srno, label in SRNO_LABELS.items():
+        row = rows.get(srno)
+        if not row:
+            continue
+        printed = True
+        times = row.get("noOfTotalMeant") or ""
+        offered = row.get("noOfShareOffered") or ""
+        bid = row.get("noOfSharesBid") or ""
+        try:
+            times = f"{float(times):.3f}x"
+        except (TypeError, ValueError):
+            times = str(times) or "(n/a)"
+        print(f"  {label:<38} {times:>10}   [offered {offered} / bid {bid}]")
+    # The Total row has srNo null; find it by category name.
+    total = next((r for r in lists[0] if isinstance(r, dict) and str(r.get("category")).lower() == "total"), None)
+    if total:
+        try:
+            tv = f"{float(total.get('noOfTotalMeant')):.3f}x"
+        except (TypeError, ValueError):
+            tv = str(total.get("noOfTotalMeant"))
+        print(f"  {'TOTAL':<38} {tv:>10}")
+    return printed
+
+
 def grade(record: object) -> None:
     flat = _flatten_keys(record)
     print("\n" + "=" * 72)
@@ -194,6 +257,8 @@ def grade(record: object) -> None:
     cats = detect_categories(record)
     for label, present in cats.items():
         print(f"[{'OK  ' if present else 'MISS'}] {label}")
+
+    subscription_summary(record)
 
     print("\n" + "=" * 72)
     print("STRUCTURAL FIELDS (key-name based)")
